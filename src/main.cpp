@@ -1,13 +1,26 @@
 #include "TelegramClient.hpp"
+#include "BotStateMashine.hpp"
 
 #include <chrono>
+#include <cstdint>
+#include <cstdlib>
+#include <exception>
 #include <iostream>
 #include <string>
 #include <thread>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 using namespace lstu;
 
-int main(int argc, char* argv[]) {
+int main() {
+
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+#endif
 
     const char* token_env = std::getenv("TELEGRAM_BOT_TOKEN");
     if (token_env == nullptr || *token_env == '\0') {
@@ -15,30 +28,42 @@ int main(int argc, char* argv[]) {
                   << "Установите переменную окружения и перезапустите программу.\n";
         return 1;
     }
-    const std::string token = token_env;
+    const std::string token(token_env);
 
-    TelegramClient client(token);
+    auto client = std::make_shared<TelegramClient>(token);
     std::int64_t marker = 0;
+    BotStateMashine::start();
+    BotStateMashine::client = client;
 
     while (true) {
-        auto result = client.getUpdates(marker, 30);
-
-        if (!result) {
-            const auto& err = result.error();
-            std::cerr << "getUpdates: code=" << static_cast<int>(err.code)
-                      << " http=" << err.http_status
-                      << " msg=" << err.message << '\n';
+        std::vector<Update> updates;
+        try {
+            updates = client->getUpdates(marker, 30);
+        } catch (const std::exception& e) {
+            std::cerr << "getUpdates: " << e.what() << '\n';
             std::this_thread::sleep_for(std::chrono::seconds(3));
             continue;
         }
 
-        for (const auto& u : *result) {
-            if (!u.text.empty())
-                if (auto sent = client.sendMessage(u.chat_id, u.text); !sent)
-                    std::cerr << "sendMessage: " << sent.error().message << '\n';
-
+        for (const auto& u : updates) {
             if (u.update_id > 0)
                 marker = u.update_id + 1;
+
+            if (u.text.empty())
+                continue;
+
+            try {
+
+                if (u.text == "/start")
+                    BotStateMashine::dispatch(StartCommand{{}, u.chat_id});
+                else if (u.text == "/reset")
+                    BotStateMashine::reset();
+                else if (u.text[0] != '/')
+                    BotStateMashine::dispatch(MessageReceived{{}, u.chat_id, u.text});
+
+            } catch (std::exception& e){
+                std::cerr << "FSM:" << e.what() << '\n';
+            }
         }
     }
 }
