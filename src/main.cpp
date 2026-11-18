@@ -41,7 +41,7 @@ int main() {
     }
     auto client = std::make_shared<TelegramClient>(tokenEnv);
 #endif
-    BotDialogProcessor proc("test.json", client);
+    BotDialogProcessor proc(client);
     std::int64_t marker = 0;
 
     while (true) {
