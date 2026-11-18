@@ -1,4 +1,12 @@
+// Закомментируйте эту строку, чтобы собрать бота с Telegram-клиентом.
+#define CONSOLE_MODE
+
+#ifdef CONSOLE_MODE
+#include "ConsoleClient.hpp"
+#else
 #include "TelegramClient.hpp"
+#endif
+
 #include "BotDialogProcessor.hpp"
 
 #include <chrono>
@@ -22,18 +30,18 @@ int main() {
     SetConsoleCP(CP_UTF8);
 #endif
 
-    const char* token_env = std::getenv("TELEGRAM_BOT_TOKEN");
-    if (token_env == nullptr || *token_env == '\0') {
+#ifdef CONSOLE_MODE
+    auto client = std::make_shared<ConsoleClient>();
+#else
+    const char* tokenEnv = std::getenv("TELEGRAM_BOT_TOKEN");
+    if (tokenEnv == nullptr || *tokenEnv == '\0') {
         std::cerr << "TELEGRAM_BOT_TOKEN не задан.\n"
                   << "Установите переменную окружения и перезапустите программу.\n";
         return 1;
     }
-    const std::string token(token_env);
-
-
-    auto client = std::make_shared<TelegramClient>(token);
-    BotDialogState::client = client;
-    BotDialogProcessor proc("test.json");
+    auto client = std::make_shared<TelegramClient>(tokenEnv);
+#endif
+    BotDialogProcessor proc("test.json", client);
     std::int64_t marker = 0;
 
     while (true) {
@@ -47,7 +55,7 @@ int main() {
         }
 
         if (!updates.empty())
-            marker = updates.back().update_id + 1;
+            marker = updates.back().updateId + 1;
 
         proc.process(updates);
     }

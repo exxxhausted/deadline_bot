@@ -1,19 +1,14 @@
 #ifndef TELEGRAMCLIENT_HPP
 #define TELEGRAMCLIENT_HPP
 
-#include <cstdint>
+#include "IClient.hpp"
+
 #include <string>
 #include <vector>
 
 namespace lstu {
 
-struct Update {
-    std::int64_t update_id = 0;
-    std::int64_t chat_id = 0;
-    std::string text;
-};
-
-class TelegramClient {
+class TelegramClient : public IClient {
 public:
 
     explicit TelegramClient(std::string token);
@@ -22,13 +17,13 @@ public:
      * @throws ApiException: NetworkFailure, HttpError, ApiNotOk, UnexpectedFormat
      * @throws nlohmann::json::parse_error при некорректном JSON в ответе
      */
-    std::vector<Update> getUpdates(std::int64_t marker, int timeout_sec) const;
+    std::vector<Update> getUpdates(std::int64_t marker, int timeoutSec) const override;
 
     /**
      * @throws ApiException: NetworkFailure, HttpError, ApiNotOk
      * @throws nlohmann::json::parse_error при некорректном JSON в ответе
      */
-    void sendMessage(std::int64_t chat_id, const std::string& text) const;
+    void sendMessage(std::int64_t chatId, const std::string& text) const override;
 
 private:
 

@@ -1,43 +1,50 @@
 #ifndef BOTDIALOGPROCESSOR_HPP
 #define BOTDIALOGPROCESSOR_HPP
 
+#include <functional>
 #include <unordered_map>
 #include <memory>
-#include "BotDialogState.hpp"
-#include "TelegramClient.hpp"
+
+#include "IClient.hpp"
 
 namespace lstu {
 
-struct PairHash {
-    std::size_t operator() (const std::pair<std::string, BotDialogInput>& p) const {
-        return std::hash<std::string>{}(p.first);
-    }
-};
-
 class BotDialogProcessor {
 
-    using TransitionMap = std::unordered_map<std::pair<std::string, BotDialogInput>,
-                                             std::string,
-                                             PairHash>;
+    enum class State {
+        qStart = 0,
+        qEcho
+    };
 
-    TransitionMap m_transitionMap;
+    struct StateMachineInput {
+        enum class Kind {
+            Command,
+            Text
+        };
 
-    std::unordered_map<std::int64_t, std::unique_ptr<BotDialogState>> m_currentStateMap;
+        std::int64_t chatId;
+        Kind kind;
+        std::string_view text;
+    };
 
-    std::string m_filename;
+    using Handler = std::function<State(const StateMachineInput&)>;
 
-    const std::string m_initialState = "StartState";
-
-    BotDialogInput parse(const Update& update);
+    std::unordered_map<State, Handler> m_transitionHandlers;
+    const State m_initialState = State::qStart;
+    std::shared_ptr<IClient> m_client;
+    std::unordered_map<std::int64_t, State> m_sessions;
 
 public:
 
-    explicit BotDialogProcessor(const std::string& filename);
-
-    ~BotDialogProcessor();
+    explicit BotDialogProcessor(std::shared_ptr<IClient> client);
 
     void process(const std::vector<Update>& updates);
 
+private:
+
+    static StateMachineInput parseUpdate(const Update&);
+
+    void stateMachineStep(const StateMachineInput&);
 };
 
 } // namespace lstu

@@ -48,6 +48,7 @@ FetchContent_MakeAvailable(json)
 # коммуникация с ботом; линкуется с cpr, nlohmann_json
 add_library(deadline_client STATIC
     src/client/TelegramClient.cpp
+    src/client/ConsoleClient.cpp
 )
 target_include_directories(deadline_client PUBLIC src/client)
 target_link_libraries(deadline_client PRIVATE
@@ -58,7 +59,6 @@ target_link_libraries(deadline_client PRIVATE
 # логика диалога; линкуется с deadline_model, deadline_repo, deadline_view
 add_library(deadline_dialog STATIC
     src/dialog/BotDialogProcessor.cpp
-    src/dialog/BotDialogState.cpp
 )
 target_include_directories(deadline_dialog PUBLIC src/dialog)
 target_link_libraries(deadline_dialog PRIVATE
@@ -67,6 +67,10 @@ target_link_libraries(deadline_dialog PRIVATE
     deadline_client
     nlohmann_json::nlohmann_json
 )
+
+if(MINGW)
+    add_link_options(-static -static-libgcc -static-libstdc++)
+endif()
 
 # исполняемый файл
 add_executable(deadline_bot src/main.cpp)

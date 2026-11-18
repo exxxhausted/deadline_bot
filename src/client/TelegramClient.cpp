@@ -16,63 +16,63 @@ std::string TelegramClient::url(const std::string& method) const {
     return "https://api.telegram.org/bot" + m_token + "/" + method;
 }
 
-std::vector<Update> TelegramClient::getUpdates(std::int64_t marker, int timeout_sec) const {
-    cpr::Response r = cpr::Get(
+std::vector<Update> TelegramClient::getUpdates(std::int64_t marker, int timeoutSec) const {
+    cpr::Response response = cpr::Get(
         cpr::Url{url("getUpdates")},
         cpr::Parameters{
             {"offset", std::to_string(marker)},
-            {"timeout", std::to_string(timeout_sec)}
+            {"timeout", std::to_string(timeoutSec)}
         },
-        cpr::Timeout{(timeout_sec + 10) * 1000}
+        cpr::Timeout{(timeoutSec + 10) * 1000}
         );
 
-    if (r.error)
-        throw NetworkFailure{r.error.message};
+    if (response.error)
+        throw NetworkFailure{response.error.message};
 
-    if (r.status_code != 200)
-        throw HttpError{r.status_code, r.text};
+    if (response.status_code != 200)
+        throw HttpError{response.status_code, response.text};
 
-    json j = json::parse(r.text);
+    json responseJson = json::parse(response.text);
 
-    if (!j.value("ok", false))
-        throw ApiNotOk{j.value("description", std::string{})};
+    if (!responseJson.value("ok", false))
+        throw ApiNotOk{responseJson.value("description", std::string{})};
 
-    if (!j.contains("result"))
+    if (!responseJson.contains("result"))
         throw UnexpectedFormat{"no result field"};
 
     std::vector<Update> updates;
-    for (const auto& item : j["result"]) {
-        Update u;
-        u.update_id = item.value("update_id", std::int64_t{0});
+    for (const auto& item : responseJson["result"]) {
+        Update update;
+        update.updateId = item.value("update_id", std::int64_t{0});
         if (item.contains("message")) {
-            const auto& m = item["message"];
-            if (m.contains("chat") && m.contains("text")) {
-                u.chat_id = m["chat"].value("id", std::int64_t{0});
-                u.text = m["text"].get<std::string>();
+            const auto& message = item["message"];
+            if (message.contains("chat") && message.contains("text")) {
+                update.chatId = message["chat"].value("id", std::int64_t{0});
+                update.text = message["text"].get<std::string>();
             }
         }
-        updates.push_back(std::move(u));
+        updates.push_back(std::move(update));
     }
     return updates;
 }
 
-void TelegramClient::sendMessage(std::int64_t chat_id, const std::string& text) const {
-    cpr::Response r = cpr::Post(
+void TelegramClient::sendMessage(std::int64_t chatId, const std::string& text) const {
+    cpr::Response response = cpr::Post(
         cpr::Url{url("sendMessage")},
-        cpr::Payload{{"chat_id", std::to_string(chat_id)}, {"text", text}},
+        cpr::Payload{{"chat_id", std::to_string(chatId)}, {"text", text}},
         cpr::Timeout{10000}
         );
 
-    if (r.error)
-        throw NetworkFailure{r.error.message};
+    if (response.error)
+        throw NetworkFailure{response.error.message};
 
-    if (r.status_code != 200)
-        throw HttpError{r.status_code, r.text};
+    if (response.status_code != 200)
+        throw HttpError{response.status_code, response.text};
 
-    json j = json::parse(r.text);
+    json responseJson = json::parse(response.text);
 
-    if (!j.value("ok", false))
-        throw ApiNotOk{j.value("description", std::string{})};
+    if (!responseJson.value("ok", false))
+        throw ApiNotOk{responseJson.value("description", std::string{})};
 }
 
 } // namespace lstu
