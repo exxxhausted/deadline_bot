@@ -4,10 +4,11 @@
 namespace lstu {
 
 enum class BotDialogInput {
-    iStart,
-    iMessage
+    Start,
+    Message,
+    Reset
 };
 
-}
+} // namespace lstu
 
 #endif // BOTDIALOGINPUT_HPP

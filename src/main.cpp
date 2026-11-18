@@ -1,5 +1,5 @@
 #include "TelegramClient.hpp"
-#include "BotStateMashine.hpp"
+#include "BotDialogProcessor.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -30,10 +30,11 @@ int main() {
     }
     const std::string token(token_env);
 
+
     auto client = std::make_shared<TelegramClient>(token);
+    BotDialogState::client = client;
+    BotDialogProcessor proc("test.json");
     std::int64_t marker = 0;
-    BotStateMashine::start();
-    BotStateMashine::client = client;
 
     while (true) {
         std::vector<Update> updates;
@@ -45,25 +46,9 @@ int main() {
             continue;
         }
 
-        for (const auto& u : updates) {
-            if (u.update_id > 0)
-                marker = u.update_id + 1;
+        if (!updates.empty())
+            marker = updates.back().update_id + 1;
 
-            if (u.text.empty())
-                continue;
-
-            try {
-
-                if (u.text == "/start")
-                    BotStateMashine::dispatch(StartCommand{{}, u.chat_id});
-                else if (u.text == "/reset")
-                    BotStateMashine::reset();
-                else if (u.text[0] != '/')
-                    BotStateMashine::dispatch(MessageReceived{{}, u.chat_id, u.text});
-
-            } catch (std::exception& e){
-                std::cerr << "FSM:" << e.what() << '\n';
-            }
-        }
+        proc.process(updates);
     }
 }

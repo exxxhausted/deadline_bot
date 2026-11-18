@@ -16,7 +16,7 @@ std::string TelegramClient::url(const std::string& method) const {
     return "https://api.telegram.org/bot" + m_token + "/" + method;
 }
 
-std::vector<Update> TelegramClient::getUpdates(std::int64_t marker, int timeout_sec) {
+std::vector<Update> TelegramClient::getUpdates(std::int64_t marker, int timeout_sec) const {
     cpr::Response r = cpr::Get(
         cpr::Url{url("getUpdates")},
         cpr::Parameters{
@@ -56,7 +56,7 @@ std::vector<Update> TelegramClient::getUpdates(std::int64_t marker, int timeout_
     return updates;
 }
 
-void TelegramClient::sendMessage(std::int64_t chat_id, const std::string& text) {
+void TelegramClient::sendMessage(std::int64_t chat_id, const std::string& text) const {
     cpr::Response r = cpr::Post(
         cpr::Url{url("sendMessage")},
         cpr::Payload{{"chat_id", std::to_string(chat_id)}, {"text", text}},

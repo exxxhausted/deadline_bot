@@ -56,14 +56,16 @@ target_link_libraries(deadline_client PRIVATE
 )
 
 # логика диалога; линкуется с deadline_model, deadline_repo, deadline_view
-add_library(deadline_dialog
-    src/dialog/BotStateMashine.cpp
+add_library(deadline_dialog STATIC
+    src/dialog/BotDialogProcessor.cpp
+    src/dialog/BotDialogState.cpp
 )
 target_include_directories(deadline_dialog PUBLIC src/dialog)
 target_link_libraries(deadline_dialog PRIVATE
 #    deadline_model
 #    deadline_repo
     deadline_client
+    nlohmann_json::nlohmann_json
 )
 
 # исполняемый файл

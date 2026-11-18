@@ -15,21 +15,23 @@ struct Update {
 
 class TelegramClient {
 public:
+
     explicit TelegramClient(std::string token);
 
     /**
      * @throws ApiException: NetworkFailure, HttpError, ApiNotOk, UnexpectedFormat
      * @throws nlohmann::json::parse_error при некорректном JSON в ответе
      */
-    std::vector<Update> getUpdates(std::int64_t marker, int timeout_sec);
+    std::vector<Update> getUpdates(std::int64_t marker, int timeout_sec) const;
 
     /**
      * @throws ApiException: NetworkFailure, HttpError, ApiNotOk
      * @throws nlohmann::json::parse_error при некорректном JSON в ответе
      */
-    void sendMessage(std::int64_t chat_id, const std::string& text);
+    void sendMessage(std::int64_t chat_id, const std::string& text) const;
 
 private:
+
     std::string url(const std::string& method) const;
 
     std::string m_token;
