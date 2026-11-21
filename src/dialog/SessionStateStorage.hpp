@@ -12,21 +12,21 @@
 
 namespace lstu {
 
-class StateStoreError : public std::runtime_error {
+class StateStorageError : public std::runtime_error {
 public:
-    explicit StateStoreError(const std::string& message) : std::runtime_error(message) {}
+    explicit StateStorageError(const std::string& message) : std::runtime_error(message) {}
 };
 
-class StateFileNotFound final : public StateStoreError {
+class StateFileNotFound final : public StateStorageError {
 public:
     explicit StateFileNotFound(const std::filesystem::path& file)
-        : StateStoreError("state file not found: " + file.string())
+        : StateStorageError("state file not found: " + file.string())
     {}
 };
 
-class SessionStateStore {
+class SessionStateStorage {
 public:
-    explicit SessionStateStore(std::filesystem::path file = "bot_state.json");
+    explicit SessionStateStorage(std::filesystem::path file = "bot_state.json");
 
     std::optional<State> load(std::int64_t chatId) const;
     void saveAll(const std::unordered_map<std::int64_t, State>& sessions) const;

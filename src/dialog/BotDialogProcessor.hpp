@@ -6,7 +6,7 @@
 #include <memory>
 
 #include "IClient.hpp"
-#include "SessionStateStore.hpp"
+#include "SessionStateStorage.hpp"
 
 namespace lstu {
 
@@ -27,14 +27,16 @@ class BotDialogProcessor {
 
     std::unordered_map<State, Handler> m_transitionHandlers;
     const State m_initialState = State::Start;
+
     std::shared_ptr<IClient> m_client;
-    SessionStateStore m_store;
+    SessionStateStorage m_storage;
+
     std::unordered_map<std::int64_t, State> m_sessions;
 
 public:
 
     explicit BotDialogProcessor(std::shared_ptr<IClient> client);
-    BotDialogProcessor(std::shared_ptr<IClient> client, SessionStateStore store);
+    BotDialogProcessor(std::shared_ptr<IClient> client, std::filesystem::path storagePath);
 
     void stateMachineStep(const Update& update);
 

@@ -14,12 +14,13 @@ BotDialogProcessor::StateMachineInput BotDialogProcessor::parseUpdate(const Upda
 }
 
 BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client) :
-    BotDialogProcessor(client, SessionStateStore{})
+    m_client(std::move(client)),
+    m_storage()
 {}
 
-BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client, SessionStateStore store) :
+BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client, std::filesystem::path storagePath) :
     m_client(std::move(client)),
-    m_store(std::move(store))
+    m_storage(storagePath)
 {
     m_transitionHandlers.emplace(
         State::Start,
@@ -51,30 +52,27 @@ BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client, SessionS
 void BotDialogProcessor::stateMachineStep(const Update& update) {
     auto input = parseUpdate(update);
 
-    // TODO(этап 3): restoreSession(input.chatId);
-    // Должно выполняться до обработчика: файл является источником истины.
-
     if(m_sessions.count(input.chatId) == 0)
-        m_sessions.emplace(input.chatId, m_initialState);
+        restoreSession(input.chatId);
+
     auto& currentState = m_sessions.at(input.chatId);
     currentState = (m_transitionHandlers.at(currentState))(input);
 
-    // TODO(этап 3): saveSessions();
-    // Фиксирует новое состояние сразу после перехода.
+    // TEMPORARY SOLUTION
+    saveSessions();
 }
 
 void BotDialogProcessor::restoreSession(std::int64_t chatId) {
     try {
-        const auto saved = m_store.load(chatId);
+        auto saved = m_storage.load(chatId);
         m_sessions[chatId] = saved.value_or(m_initialState);
     } catch (const StateFileNotFound&) {
-        // Первый запуск: файла ещё нет, это не ошибка.
         m_sessions[chatId] = m_initialState;
     }
 }
 
 void BotDialogProcessor::saveSessions() const {
-    m_store.saveAll(m_sessions);
+    m_storage.saveAll(m_sessions);
 }
 
 

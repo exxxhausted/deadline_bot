@@ -52,7 +52,7 @@ int main() {
         std::chrono::milliseconds{250}
     );
 #endif
-    BotDialogProcessor proc(client);
+    BotDialogProcessor proc(client, "stateStorage.json");
     std::int64_t marker = 0;
 
     constexpr int pollTimeoutSec = 30;
@@ -67,11 +67,6 @@ int main() {
             std::this_thread::sleep_for(retryDelay);
             continue;
         }
-
-#ifdef CONSOLE_MODE
-        if (updates.empty() && client->eof())
-            break;
-#endif
 
         for (const auto& update : updates) {
             try {

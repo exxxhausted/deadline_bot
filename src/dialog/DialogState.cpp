@@ -1,8 +1,10 @@
 #include "DialogState.hpp"
 
+#include <stdexcept>
+
 namespace lstu {
 
-std::string_view toString(State state) {
+std::string toString(State state) {
     switch (state) {
     case State::Start:
         return "Start";
@@ -12,12 +14,13 @@ std::string_view toString(State state) {
     return "Start";
 }
 
-std::optional<State> stateFromString(std::string_view name) {
+State stateFromString(std::string_view name) {
     if (name == "Start")
         return State::Start;
     if (name == "Echo")
         return State::Echo;
-    return std::nullopt;
+
+    throw std::invalid_argument("Cant convert \"" + std::string(name) + "\" to State");
 }
 
 } // namespace lstu
