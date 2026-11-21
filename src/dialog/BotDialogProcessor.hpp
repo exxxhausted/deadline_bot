@@ -6,15 +6,11 @@
 #include <memory>
 
 #include "IClient.hpp"
+#include "SessionStateStore.hpp"
 
 namespace lstu {
 
 class BotDialogProcessor {
-
-    enum class State {
-        Start = 0,
-        Echo
-    };
 
     struct StateMachineInput {
         enum class Kind {
@@ -32,13 +28,18 @@ class BotDialogProcessor {
     std::unordered_map<State, Handler> m_transitionHandlers;
     const State m_initialState = State::Start;
     std::shared_ptr<IClient> m_client;
+    SessionStateStore m_store;
     std::unordered_map<std::int64_t, State> m_sessions;
 
 public:
 
     explicit BotDialogProcessor(std::shared_ptr<IClient> client);
+    BotDialogProcessor(std::shared_ptr<IClient> client, SessionStateStore store);
 
     void stateMachineStep(const Update& update);
+
+    void restoreSession(std::int64_t chatId);
+    void saveSessions() const;
 
 private:
 

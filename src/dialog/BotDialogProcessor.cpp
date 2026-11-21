@@ -1,5 +1,7 @@
 #include "BotDialogProcessor.hpp"
 
+#include <utility>
+
 using namespace lstu;
 
 BotDialogProcessor::StateMachineInput BotDialogProcessor::parseUpdate(const Update& u) {
@@ -12,7 +14,12 @@ BotDialogProcessor::StateMachineInput BotDialogProcessor::parseUpdate(const Upda
 }
 
 BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client) :
-    m_client(client)
+    BotDialogProcessor(client, SessionStateStore{})
+{}
+
+BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client, SessionStateStore store) :
+    m_client(std::move(client)),
+    m_store(std::move(store))
 {
     m_transitionHandlers.emplace(
         State::Start,
@@ -43,10 +50,26 @@ BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client) :
 
 void BotDialogProcessor::stateMachineStep(const Update& update) {
     auto input = parseUpdate(update);
+
+    // TODO(этап 3): restoreSession(input.chatId);
+    // Должно выполняться до обработчика: файл является источником истины.
+
     if(m_sessions.count(input.chatId) == 0)
         m_sessions.emplace(input.chatId, m_initialState);
     auto& currentState = m_sessions.at(input.chatId);
     currentState = (m_transitionHandlers.at(currentState))(input);
+
+    // TODO(этап 3): saveSessions();
+    // Фиксирует новое состояние сразу после перехода.
+}
+
+void BotDialogProcessor::restoreSession(std::int64_t chatId) {
+    const auto saved = m_store.load(chatId);
+    m_sessions[chatId] = saved.value_or(m_initialState);
+}
+
+void BotDialogProcessor::saveSessions() const {
+    m_store.saveAll(m_sessions);
 }
 
 

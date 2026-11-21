@@ -59,6 +59,8 @@ target_link_libraries(deadline_client PRIVATE
 # логика диалога; линкуется с deadline_model, deadline_repo, deadline_view
 add_library(deadline_dialog STATIC
     src/dialog/BotDialogProcessor.cpp
+    src/dialog/DialogState.cpp
+    src/dialog/SessionStateStore.cpp
 )
 target_include_directories(deadline_dialog PUBLIC src/dialog)
 target_link_libraries(deadline_dialog PRIVATE
