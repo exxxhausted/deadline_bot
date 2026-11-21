@@ -9,8 +9,9 @@
 
 ## Build and verification
 
+- Do not run builds or tests unless the user explicitly asks: a fresh FetchContent configure can take several minutes.
 - No README, no CI, no test sources. `CMakeLists.txt` is the only build source of truth; C++17.
-- Targets: `deadline_client` (`TelegramClient.cpp` + `ConsoleClient.cpp`), `deadline_dialog` (`BotDialogProcessor.cpp`), `deadline_bot` (`src/main.cpp`).
+- Targets: `deadline_client` (`TelegramClient.cpp` + `RetryingTelegramClient.cpp` + `ConsoleClient.cpp`), `deadline_dialog` (`BotDialogProcessor.cpp`), `deadline_bot` (`src/main.cpp`).
 - Pinned FetchContent deps: Catch2 `v3.16.1`, cpr `1.10.5`, nlohmann/json `v3.11.3`. Fresh configure needs network. Build directories are gitignored (`build*/`) and may be stale — never rely on a machine-specific path.
 - Static builds are required on both toolchains: MSVC via `CMAKE_MSVC_RUNTIME_LIBRARY` (`/MT`, `/MTd`), MinGW via `-static -static-libgcc -static-libstdc++`. Keep both when touching `CMakeLists.txt`.
 
