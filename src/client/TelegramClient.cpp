@@ -10,8 +10,6 @@ namespace lstu {
 
 using json = nlohmann::json;
 
-namespace {
-
 json parseResponseJson(const std::string& body) {
     try {
         return json::parse(body);
@@ -19,8 +17,6 @@ json parseResponseJson(const std::string& body) {
         throw UnexpectedFormat{std::string{"invalid response JSON: "} + error.what()};
     }
 }
-
-} // namespace
 
 TelegramClient::TelegramClient(std::string token) : m_token(std::move(token)) {}
 

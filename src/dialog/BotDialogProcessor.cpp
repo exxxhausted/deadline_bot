@@ -41,21 +41,12 @@ BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client) :
     );
 }
 
-void BotDialogProcessor::stateMachineStep(const StateMachineInput& r) {
-    if(m_sessions.count(r.chatId) == 0)
-        m_sessions.emplace(r.chatId, m_initialState);
-    auto& currentState = m_sessions.at(r.chatId);
-    currentState = (m_transitionHandlers.at(currentState))(r);
-}
-
-void BotDialogProcessor::process(const Update& update) {
+void BotDialogProcessor::stateMachineStep(const Update& update) {
     auto input = parseUpdate(update);
-    stateMachineStep(input);
-}
-
-void BotDialogProcessor::process(const std::vector<Update>& updates) {
-    for(const auto& update : updates)
-        process(update);
+    if(m_sessions.count(input.chatId) == 0)
+        m_sessions.emplace(input.chatId, m_initialState);
+    auto& currentState = m_sessions.at(input.chatId);
+    currentState = (m_transitionHandlers.at(currentState))(input);
 }
 
 

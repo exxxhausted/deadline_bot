@@ -9,10 +9,6 @@
 
 namespace lstu {
 
-/**
- * Повторяет временные ошибки базового TelegramClient.
- * ReachedTimeout и ApiNotOk не повторяются.
- */
 class RetryingTelegramClient final : public TelegramClient {
 public:
     explicit RetryingTelegramClient(std::string token,
@@ -23,8 +19,8 @@ public:
     void sendMessage(std::int64_t chatId, const std::string& text) const override;
 
 private:
-    int m_attempts;
-    std::chrono::milliseconds m_retryDelay;
+    const int m_attempts;
+    const std::chrono::milliseconds m_retryDelay;
 };
 
 } // namespace lstu

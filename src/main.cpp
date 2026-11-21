@@ -1,4 +1,4 @@
-// Закомментируйте эту строку, чтобы собрать бота с Telegram-клиентом.
+// Закомментируй эту строку, чтобы собрать бота с Telegram-клиентом.
 #define CONSOLE_MODE
 
 #ifdef CONSOLE_MODE
@@ -62,13 +62,15 @@ int main() {
 
         for (const auto& update : updates) {
             try {
-                proc.process(update);
-                const std::int64_t nextMarker = update.updateId + 1;
-                if (nextMarker > marker)
-                    marker = nextMarker;
+                proc.stateMachineStep(update);
+                if (update.updateId + 1 > marker)
+                    marker = update.updateId + 1;
             } catch (const std::exception& e) {
-                std::cerr << "process update " << update.updateId << ": "
-                          << e.what() << '\n';
+                std::cerr << "process update "
+                          << update.updateId
+                          << ": "
+                          << e.what()
+                          << '\n';
                 std::this_thread::sleep_for(retryDelay);
                 break;
             }

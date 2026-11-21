@@ -6,23 +6,17 @@
 
 namespace lstu {
 
-namespace {
-
-bool isRetryableHttpError(const HttpError& error) {
-    return error.status == 429 || error.status >= 500;
-}
-
-} // namespace
-
 RetryingTelegramClient::RetryingTelegramClient(std::string token,
                                                int attempts,
-                                               std::chrono::milliseconds retryDelay)
-    : TelegramClient(std::move(token)),
+                                               std::chrono::milliseconds retryDelay) :
+    TelegramClient(std::move(token)),
     m_attempts(attempts),
     m_retryDelay(retryDelay)
 {}
 
-std::vector<Update> RetryingTelegramClient::getUpdates(std::int64_t marker, int timeoutSec) const {
+std::vector<Update>
+RetryingTelegramClient::getUpdates(std::int64_t marker, int timeoutSec) const
+{
     for (int attempt = 1;; ++attempt) {
         try {
             return TelegramClient::getUpdates(marker, timeoutSec);
@@ -32,7 +26,7 @@ std::vector<Update> RetryingTelegramClient::getUpdates(std::int64_t marker, int 
             if (attempt >= m_attempts)
                 throw;
         } catch (const HttpError& error) {
-            if (!isRetryableHttpError(error) || attempt >= m_attempts)
+            if (!error.isRetryable() || attempt >= m_attempts)
                 throw;
         } catch (const UnexpectedFormat&) {
             if (attempt >= m_attempts)
@@ -42,7 +36,9 @@ std::vector<Update> RetryingTelegramClient::getUpdates(std::int64_t marker, int 
     }
 }
 
-void RetryingTelegramClient::sendMessage(std::int64_t chatId, const std::string& text) const {
+void
+RetryingTelegramClient::sendMessage(std::int64_t chatId, const std::string& text) const
+{
     for (int attempt = 1;; ++attempt) {
         try {
             TelegramClient::sendMessage(chatId, text);
@@ -53,7 +49,7 @@ void RetryingTelegramClient::sendMessage(std::int64_t chatId, const std::string&
             if (attempt >= m_attempts)
                 throw;
         } catch (const HttpError& error) {
-            if (!isRetryableHttpError(error) || attempt >= m_attempts)
+            if (!error.isRetryable() || attempt >= m_attempts)
                 throw;
         } catch (const UnexpectedFormat&) {
             if (attempt >= m_attempts)

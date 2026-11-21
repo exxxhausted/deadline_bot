@@ -38,14 +38,11 @@ public:
 
     explicit BotDialogProcessor(std::shared_ptr<IClient> client);
 
-    void process(const Update& update);
-    void process(const std::vector<Update>& updates);
+    void stateMachineStep(const Update& update);
 
 private:
 
     static StateMachineInput parseUpdate(const Update&);
-
-    void stateMachineStep(const StateMachineInput&);
 };
 
 } // namespace lstu

@@ -30,6 +30,10 @@ public:
         body(body)
     {}
 
+    bool isRetryable() const {
+        return status == 429 || status >= 500;
+    }
+
     std::int64_t status;
     std::string body;
 };
