@@ -38,6 +38,7 @@ public:
 
     explicit BotDialogProcessor(std::shared_ptr<IClient> client);
 
+    void process(const Update& update);
     void process(const std::vector<Update>& updates);
 
 private:

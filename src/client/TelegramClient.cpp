@@ -10,6 +10,18 @@ namespace lstu {
 
 using json = nlohmann::json;
 
+namespace {
+
+json parseResponseJson(const std::string& body) {
+    try {
+        return json::parse(body);
+    } catch (const json::exception& error) {
+        throw UnexpectedFormat{std::string{"invalid response JSON: "} + error.what()};
+    }
+}
+
+} // namespace
+
 TelegramClient::TelegramClient(std::string token) : m_token(std::move(token)) {}
 
 std::string TelegramClient::url(const std::string& method) const {
@@ -23,16 +35,19 @@ std::vector<Update> TelegramClient::getUpdates(std::int64_t marker, int timeoutS
             {"offset", std::to_string(marker)},
             {"timeout", std::to_string(timeoutSec)}
         },
-        cpr::Timeout{(timeoutSec + 10) * 1000}
+        cpr::Timeout{(timeoutSec + 5) * 1000}
         );
 
-    if (response.error)
+    if (response.error) {
+        if (response.error.code == cpr::ErrorCode::OPERATION_TIMEDOUT)
+            throw ReachedTimeout{response.error.message};
         throw NetworkFailure{response.error.message};
+    }
 
     if (response.status_code != 200)
         throw HttpError{response.status_code, response.text};
 
-    json responseJson = json::parse(response.text);
+    json responseJson = parseResponseJson(response.text);
 
     if (!responseJson.value("ok", false))
         throw ApiNotOk{responseJson.value("description", std::string{})};
@@ -60,16 +75,19 @@ void TelegramClient::sendMessage(std::int64_t chatId, const std::string& text) c
     cpr::Response response = cpr::Post(
         cpr::Url{url("sendMessage")},
         cpr::Payload{{"chat_id", std::to_string(chatId)}, {"text", text}},
-        cpr::Timeout{10000}
+        cpr::Timeout{3000}
         );
 
-    if (response.error)
+    if (response.error) {
+        if (response.error.code == cpr::ErrorCode::OPERATION_TIMEDOUT)
+            throw ReachedTimeout{response.error.message};
         throw NetworkFailure{response.error.message};
+    }
 
     if (response.status_code != 200)
         throw HttpError{response.status_code, response.text};
 
-    json responseJson = json::parse(response.text);
+    json responseJson = parseResponseJson(response.text);
 
     if (!responseJson.value("ok", false))
         throw ApiNotOk{responseJson.value("description", std::string{})};

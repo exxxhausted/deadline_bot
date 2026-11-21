@@ -20,12 +20,12 @@ public:
     /**
      * @param marker идентификатор следующего ожидаемого обновления
      * @param timeoutSec максимальное время ожидания в секундах
-     * @throws ApiException: NetworkFailure, HttpError, ApiNotOk, UnexpectedFormat
+     * @throws ApiException: ReachedTimeout, NetworkFailure, HttpError, ApiNotOk, UnexpectedFormat
      */
     virtual std::vector<Update> getUpdates(std::int64_t marker, int timeoutSec) const = 0;
 
     /**
-     * @throws ApiException: NetworkFailure, HttpError, ApiNotOk
+     * @throws ApiException: ReachedTimeout, NetworkFailure, HttpError, ApiNotOk, UnexpectedFormat
      */
     virtual void sendMessage(std::int64_t chatId, const std::string& text) const = 0;
 };

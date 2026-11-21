@@ -14,14 +14,12 @@ public:
     explicit TelegramClient(std::string token);
 
     /**
-     * @throws ApiException: NetworkFailure, HttpError, ApiNotOk, UnexpectedFormat
-     * @throws nlohmann::json::parse_error при некорректном JSON в ответе
+     * @throws ApiException: ReachedTimeout, NetworkFailure, HttpError, ApiNotOk, UnexpectedFormat
      */
     std::vector<Update> getUpdates(std::int64_t marker, int timeoutSec) const override;
 
     /**
-     * @throws ApiException: NetworkFailure, HttpError, ApiNotOk
-     * @throws nlohmann::json::parse_error при некорректном JSON в ответе
+     * @throws ApiException: ReachedTimeout, NetworkFailure, HttpError, ApiNotOk, UnexpectedFormat
      */
     void sendMessage(std::int64_t chatId, const std::string& text) const override;
 

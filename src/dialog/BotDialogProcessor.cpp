@@ -48,11 +48,14 @@ void BotDialogProcessor::stateMachineStep(const StateMachineInput& r) {
     currentState = (m_transitionHandlers.at(currentState))(r);
 }
 
+void BotDialogProcessor::process(const Update& update) {
+    auto input = parseUpdate(update);
+    stateMachineStep(input);
+}
+
 void BotDialogProcessor::process(const std::vector<Update>& updates) {
-    for(const auto& update : updates) {
-        auto input = parseUpdate(update);
-        stateMachineStep(input);
-    }
+    for(const auto& update : updates)
+        process(update);
 }
 
 

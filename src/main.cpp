@@ -4,7 +4,7 @@
 #ifdef CONSOLE_MODE
 #include "ConsoleClient.hpp"
 #else
-#include "TelegramClient.hpp"
+#include "RetryingTelegramClient.hpp"
 #endif
 
 #include "BotDialogProcessor.hpp"
@@ -38,24 +38,40 @@ int main() {
                   << "Установите переменную окружения и перезапустите программу.\n";
         return 1;
     }
-    auto client = std::make_shared<TelegramClient>(tokenEnv);
+    auto client = std::make_shared<RetryingTelegramClient>(
+        tokenEnv,
+        3,
+        std::chrono::milliseconds{250}
+    );
 #endif
     BotDialogProcessor proc(client);
     std::int64_t marker = 0;
 
+    constexpr int pollTimeoutSec = 30;
+    constexpr auto retryDelay = std::chrono::seconds(3);
+
     while (true) {
         std::vector<Update> updates;
         try {
-            updates = client->getUpdates(marker, 30);
+            updates = client->getUpdates(marker, pollTimeoutSec);
         } catch (const std::exception& e) {
             std::cerr << "getUpdates: " << e.what() << '\n';
-            std::this_thread::sleep_for(std::chrono::seconds(3));
+            std::this_thread::sleep_for(retryDelay);
             continue;
         }
 
-        if (!updates.empty())
-            marker = updates.back().updateId + 1;
-
-        proc.process(updates);
+        for (const auto& update : updates) {
+            try {
+                proc.process(update);
+                const std::int64_t nextMarker = update.updateId + 1;
+                if (nextMarker > marker)
+                    marker = nextMarker;
+            } catch (const std::exception& e) {
+                std::cerr << "process update " << update.updateId << ": "
+                          << e.what() << '\n';
+                std::this_thread::sleep_for(retryDelay);
+                break;
+            }
+        }
     }
 }

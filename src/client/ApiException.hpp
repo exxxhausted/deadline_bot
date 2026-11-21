@@ -12,9 +12,14 @@ public:
     explicit ApiException(const std::string& message) : std::runtime_error(message) {}
 };
 
-class NetworkFailure final : public ApiException {
+class NetworkFailure : public ApiException {
 public:
     explicit NetworkFailure(const std::string& message) : ApiException(message) {}
+};
+
+class ReachedTimeout final : public NetworkFailure {
+public:
+    explicit ReachedTimeout(const std::string& message) : NetworkFailure(message) {}
 };
 
 class HttpError final : public ApiException {

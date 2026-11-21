@@ -47,6 +47,7 @@ FetchContent_MakeAvailable(json)
 # коммуникация с ботом; линкуется с cpr, nlohmann_json
 add_library(deadline_client STATIC
     src/client/TelegramClient.cpp
+    src/client/RetryingTelegramClient.cpp
     src/client/ConsoleClient.cpp
 )
 target_include_directories(deadline_client PUBLIC src/client)
