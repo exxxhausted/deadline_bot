@@ -64,8 +64,13 @@ void BotDialogProcessor::stateMachineStep(const Update& update) {
 }
 
 void BotDialogProcessor::restoreSession(std::int64_t chatId) {
-    const auto saved = m_store.load(chatId);
-    m_sessions[chatId] = saved.value_or(m_initialState);
+    try {
+        const auto saved = m_store.load(chatId);
+        m_sessions[chatId] = saved.value_or(m_initialState);
+    } catch (const StateFileNotFound&) {
+        // Первый запуск: файла ещё нет, это не ошибка.
+        m_sessions[chatId] = m_initialState;
+    }
 }
 
 void BotDialogProcessor::saveSessions() const {

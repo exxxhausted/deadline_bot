@@ -28,4 +28,5 @@
 - Naming: members `m_` + camelCase (`m_nextUpdateId`), parameters/locals camelCase (`chatId`, `timeoutSec`). Telegram JSON keys stay snake_case (`update_id`, `chat_id`).
 - `ApiException.hpp` is included only by `TelegramClient.cpp`; include it explicitly where `NetworkFailure` / `HttpError` / `ApiNotOk` / `UnexpectedFormat` are caught.
 - `DialogState.hpp` owns the serializable `State` enum; `SessionStateStore` reads/writes `bot_state.json`.
+- `SessionStateStore::load()` returns `nullopt` only when the file is valid but has no record for the chat; missing/corrupt files throw `StateStoreError` / `StateFileNotFound`. The store never logs or swallows errors.
 - `BotDialogProcessor::restoreSession()` and `saveSessions()` exist but are intentionally not called from `stateMachineStep()` yet; wire them in manually.
