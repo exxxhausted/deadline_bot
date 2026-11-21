@@ -13,11 +13,6 @@ BotDialogProcessor::StateMachineInput BotDialogProcessor::parseUpdate(const Upda
     return {u.chatId, StateMachineInput::Kind::Text, t};
 }
 
-BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client) :
-    m_client(std::move(client)),
-    m_storage()
-{}
-
 BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client, std::filesystem::path storagePath) :
     m_client(std::move(client)),
     m_storage(storagePath)
@@ -57,9 +52,6 @@ void BotDialogProcessor::stateMachineStep(const Update& update) {
 
     auto& currentState = m_sessions.at(input.chatId);
     currentState = (m_transitionHandlers.at(currentState))(input);
-
-    // TEMPORARY SOLUTION
-    saveSessions();
 }
 
 void BotDialogProcessor::restoreSession(std::int64_t chatId) {

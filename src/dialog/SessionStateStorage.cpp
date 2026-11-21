@@ -48,6 +48,20 @@ void SessionStateStorage::saveAll(const std::unordered_map<std::int64_t, State>&
     }
 
     json data = json::object();
+    {
+        std::ifstream input(m_file);
+        if (input) {
+            try {
+                input >> data;
+            } catch (const json::exception& error) {
+                throw StateStorageError{
+                        "invalid state file " + m_file.string() + ": " + error.what()
+                };
+            }
+            if (!data.is_object())
+                throw StateStorageError{"state file root is not an object"};
+        }
+    }
 
     for (const auto& [chatId, state] : sessions)
         data[std::to_string(chatId)] = toString(state);

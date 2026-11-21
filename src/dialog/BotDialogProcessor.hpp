@@ -34,8 +34,6 @@ class BotDialogProcessor {
     std::unordered_map<std::int64_t, State> m_sessions;
 
 public:
-
-    explicit BotDialogProcessor(std::shared_ptr<IClient> client);
     BotDialogProcessor(std::shared_ptr<IClient> client, std::filesystem::path storagePath);
 
     void stateMachineStep(const Update& update);
