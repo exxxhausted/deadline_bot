@@ -12,8 +12,8 @@ namespace lstu {
 class BotDialogProcessor {
 
     enum class State {
-        qStart = 0,
-        qEcho
+        Start = 0,
+        Echo
     };
 
     struct StateMachineInput {
@@ -30,7 +30,7 @@ class BotDialogProcessor {
     using Handler = std::function<State(const StateMachineInput&)>;
 
     std::unordered_map<State, Handler> m_transitionHandlers;
-    const State m_initialState = State::qStart;
+    const State m_initialState = State::Start;
     std::shared_ptr<IClient> m_client;
     std::unordered_map<std::int64_t, State> m_sessions;
 

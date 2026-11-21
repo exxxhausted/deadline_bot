@@ -14,7 +14,6 @@
 #include <cstdlib>
 #include <exception>
 #include <iostream>
-#include <string>
 #include <thread>
 
 #ifdef _WIN32

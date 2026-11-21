@@ -5,14 +5,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-include(FetchContent)
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+elseif(MINGW)
+    add_link_options(-static -static-libgcc -static-libstdc++)
+endif()
 
-FetchContent_Declare(
-    Catch2
-    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG        v3.16.1
-)
-FetchContent_MakeAvailable(Catch2)
+include(FetchContent)
 
 FetchContent_Declare(
     cpr
@@ -68,10 +67,6 @@ target_link_libraries(deadline_dialog PRIVATE
     nlohmann_json::nlohmann_json
 )
 
-if(MINGW)
-    add_link_options(-static -static-libgcc -static-libstdc++)
-endif()
-
 # исполняемый файл
 add_executable(deadline_bot src/main.cpp)
 target_link_libraries(deadline_bot PRIVATE
@@ -80,17 +75,3 @@ target_link_libraries(deadline_bot PRIVATE
     deadline_client
     deadline_dialog
 )
-
-# тестирование
-#enable_testing()
-#add_executable(deadline_tests
-#)
-#target_link_libraries(deadline_tests PRIVATE
-#    deadline_model
-#    deadline_repo
-#    deadline_view
-#    deadline_dialog
-#    Catch2::Catch2WithMain
-#)
-#include(Catch)
-#catch_discover_tests(deadline_tests)

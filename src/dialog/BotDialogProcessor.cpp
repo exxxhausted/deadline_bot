@@ -15,27 +15,27 @@ BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client) :
     m_client(client)
 {
     m_transitionHandlers.emplace(
-        State::qStart,
+        State::Start,
         [this](const StateMachineInput& r) {
             if(r.kind == StateMachineInput::Kind::Command && r.text == "/start") {
                 m_client->sendMessage(r.chatId, "Greetings!");
-                return State::qEcho;
+                return State::Echo;
             } else {
                 m_client->sendMessage(r.chatId, "Press /start");
-                return State::qStart;
+                return State::Start;
             }
         }
     );
 
     m_transitionHandlers.emplace(
-        State::qEcho,
+        State::Echo,
         [this](const StateMachineInput& r) {
             if(r.kind == StateMachineInput::Kind::Command && r.text == "/reset") {
                 m_client->sendMessage(r.chatId, "Reseting...");
-                return State::qStart;
+                return State::Start;
             } else {
                 m_client->sendMessage(r.chatId, "Эхо: " + std::string(r.text));
-                return State::qEcho;
+                return State::Echo;
             }
         }
     );
