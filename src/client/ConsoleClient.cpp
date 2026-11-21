@@ -10,9 +10,9 @@ namespace lstu {
 
 ConsoleClient::ConsoleClient(std::int64_t chatId) : m_chatId(chatId) {}
 
-std::vector<Update> ConsoleClient::getUpdates(std::int64_t marker, int /*timeoutSec*/) const {
-    // marker приходит от вызывающей стороны как updateId последнего
-    // обработанного сообщения + 1; не выдаём идентификаторы меньше него.
+std::vector<Update>
+ConsoleClient::getUpdates(std::int64_t marker, int /*timeoutSec*/) const
+{
     m_nextUpdateId = std::max(m_nextUpdateId, marker);
 
     std::string line;
@@ -30,7 +30,7 @@ std::vector<Update> ConsoleClient::getUpdates(std::int64_t marker, int /*timeout
 }
 
 void ConsoleClient::sendMessage(std::int64_t chatId, const std::string& text) const {
-    std::cout << '[' << chatId << "] " << text << '\n' << std::flush;
+    std::cout << "[" << chatId << "] " << text << std::endl;
 }
 
 bool ConsoleClient::eof() const noexcept {
