@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <exception>
 #include <iostream>
+#include <limits>
 #include <thread>
 
 #ifdef _WIN32
@@ -30,7 +31,14 @@ int main() {
 #endif
 
 #ifdef CONSOLE_MODE
-    auto client = std::make_shared<ConsoleClient>();
+    std::int64_t chatId = 0;
+    std::cout << "Введите id чата: " << std::flush;
+    if (!(std::cin >> chatId)) {
+        std::cerr << "Некорректный id чата.\n";
+        return 1;
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    auto client = std::make_shared<ConsoleClient>(chatId);
 #else
     const char* tokenEnv = std::getenv("TELEGRAM_BOT_TOKEN");
     if (tokenEnv == nullptr || *tokenEnv == '\0') {
@@ -59,6 +67,11 @@ int main() {
             std::this_thread::sleep_for(retryDelay);
             continue;
         }
+
+#ifdef CONSOLE_MODE
+        if (updates.empty() && client->eof())
+            break;
+#endif
 
         for (const auto& update : updates) {
             try {

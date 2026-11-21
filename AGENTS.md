@@ -19,8 +19,8 @@
 
 - Mode switch is a single `#define CONSOLE_MODE` at the top of `src/main.cpp`, **not** a CMake option. Comment it out to build with `TelegramClient`.
 - Console mode must not require a token: `TELEGRAM_BOT_TOKEN` is read only in the Telegram `#else` branch.
-- `ConsoleClient` is console-only: reads `std::cin`, writes `std::cout`, no injected streams, no stored chat id. `sendMessage` prints `[chatId] text`.
-- `getUpdates` reads one line, ignores `timeoutSec`, and returns an empty vector on EOF. `main` has no exit condition, so piping a file makes it spin forever after EOF — use interactive input or kill the process.
+- `ConsoleClient` is console-only: reads `std::cin`, writes `std::cout`, no injected streams. It stores the chat id entered at startup and assigns it to every `Update`; `sendMessage` prints `[chatId] text`.
+- `getUpdates` reads one line, ignores `timeoutSec`, and returns an empty vector on EOF while setting `eof()`. Console mode exits when EOF is reached.
 
 ## Code conventions and gotchas
 
