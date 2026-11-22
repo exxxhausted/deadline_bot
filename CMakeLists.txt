@@ -75,7 +75,6 @@ target_link_libraries(deadline_client PRIVATE
 add_library(deadline_dialog STATIC
     src/dialog/BotDialogProcessor.cpp
     src/dialog/DialogState.cpp
-
 )
 target_include_directories(deadline_dialog PUBLIC src/dialog)
 target_link_libraries(deadline_dialog PRIVATE
@@ -86,8 +85,7 @@ target_link_libraries(deadline_dialog PRIVATE
 )
 
 # исполняемый файл
-add_executable(deadline_bot src/main.cpp
-    src/model/Date.cpp)
+add_executable(deadline_bot src/main.cpp)
 target_link_libraries(deadline_bot PRIVATE
     deadline_model
     deadline_repo
