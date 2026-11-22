@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 project(deadline_bot LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -30,10 +30,10 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(json)
 
 # основная логика; ни с чем не линкуется
-#add_library(deadline_model STATIC
-#
-#)
-#target_include_directories(deadline_model PUBLIC src/model)
+add_library(deadline_model STATIC
+    src/model/Task.cpp
+)
+target_include_directories(deadline_model PUBLIC src/model)
 
 # репозиторий; линкуется с SQLiteCpp, deadline_model
 #add_library(deadline_repo STATIC
@@ -64,7 +64,7 @@ add_library(deadline_dialog STATIC
 )
 target_include_directories(deadline_dialog PUBLIC src/dialog)
 target_link_libraries(deadline_dialog PRIVATE
-#    deadline_model
+    deadline_model
 #    deadline_repo
     deadline_client
     nlohmann_json::nlohmann_json
@@ -73,7 +73,7 @@ target_link_libraries(deadline_dialog PRIVATE
 # исполняемый файл
 add_executable(deadline_bot src/main.cpp)
 target_link_libraries(deadline_bot PRIVATE
-#    deadline_model
+    deadline_model
 #    deadline_repo
     deadline_client
     deadline_dialog

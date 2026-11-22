@@ -17,6 +17,9 @@
 #include <limits>
 #include <thread>
 #include <csignal>
+#include <algorithm>
+
+#define NOMINMAX
 
 #ifdef _WIN32
 #include <windows.h>

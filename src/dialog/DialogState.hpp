@@ -1,6 +1,7 @@
 #ifndef DIALOGSTATE_HPP
 #define DIALOGSTATE_HPP
 
+#include <string>
 #include <string_view>
 
 namespace lstu {
