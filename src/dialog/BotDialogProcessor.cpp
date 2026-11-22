@@ -48,8 +48,10 @@ BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client,
             if(input.kind == StateMachineInput::Kind::Command && input.text == "/list") {
                 const auto tasks = m_repo.taskList(input.chatId);
                 std::string text = tasks.empty() ? "Активных задач нет." : "Активные задачи:";
-                for(const auto& t : tasks)
-                    text += "\n" + std::to_string(t.id) + ". " + t.title + " - до " + dateToIso(t.deadline);
+                for(int i = 0; i < tasks.size(); ++i) {
+                    text += "\n" + std::to_string(i + 1) + ". " + tasks[i].title + " - до "
+                            + dateToIso(tasks[i].deadline);
+                }
                 m_client->sendMessage(input.chatId, text);
                 return DialogState::Echo;
             }
@@ -97,24 +99,19 @@ BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client,
                 return DialogState::AwaitDeadline;
             }
 
-            auto draft = m_drafts.find(input.chatId);
-            if(draft == m_drafts.end()) {
-                m_client->sendMessage(input.chatId, "Бот перезапускался, черновик потерян.");
-                return DialogState::Echo;
-            }
-
             try {
-                draft->second.setDeadline(dateFromIso(input.text));
+                m_drafts.at(input.chatId).setDeadline(dateFromIso(input.text));
             } catch(const std::invalid_argument&) {
                 m_client->sendMessage(input.chatId, "Не понял дату. Нужен формат ДД-ММ-ГГГГ.");
                 return DialogState::AwaitDeadline;
             }
 
-            Task task = draft->second.build();
+            Task task = m_drafts.at(input.chatId).build();
             auto id = m_repo.addTask(task);
-            m_drafts.erase(draft);
-            m_client->sendMessage(input.chatId, "Сохранено: <<" + task.title + ">> до " + dateToIso(task.deadline)
-                                                + ", id " + std::to_string(id) + ".");
+            m_drafts.erase(input.chatId);
+            m_client->sendMessage(input.chatId, "Сохранено: <<" + task.title + ">> до "
+                                                    + dateToIso(task.deadline) + ", id "
+                                                    + std::to_string(id) + ".");
             return DialogState::Echo;
         }
     );
@@ -132,9 +129,10 @@ void BotDialogProcessor::stateMachineStep(const Update& update) {
 
 void BotDialogProcessor::restoreSession(std::int64_t chatId) {
     auto saved = m_repo.getState(chatId);
-    if (!saved)
+    if (!saved) {
         m_sessions[chatId] = DialogState::Start;
-
+        return;
+    }
     if (*saved != DialogState::Echo)
         m_client->sendMessage(chatId, "Бот перезапускался, черновики потеряны.");
 

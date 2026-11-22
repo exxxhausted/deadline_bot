@@ -1,5 +1,5 @@
 // Закомментируй эту строку, чтобы собрать бота с Telegram-клиентом.
-#define CONSOLE_MODE
+//#define CONSOLE_MODE
 
 #ifdef CONSOLE_MODE
 #include "ConsoleClient.hpp"
