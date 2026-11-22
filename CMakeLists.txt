@@ -21,7 +21,6 @@ FetchContent_Declare(
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libs" FORCE)
 FetchContent_MakeAvailable(cpr)
 
-include(FetchContent)
 set(SQLITECPP_RUN_CPPLINT OFF CACHE BOOL "" FORCE)
 set(SQLITECPP_RUN_CPPCHECK OFF CACHE BOOL "" FORCE)
 set(SQLITECPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -53,9 +52,11 @@ add_library(deadline_repo STATIC
     src/repo/TaskRepository.cpp
 )
 target_include_directories(deadline_repo PUBLIC src/repo)
-target_link_libraries(deadline_repo PRIVATE
-    deadline_model
-    SQLiteCpp
+target_link_libraries(deadline_repo
+    PRIVATE deadline_model
+    PRIVATE deadline_dialog
+    PUBLIC SQLiteCpp
+    PUBLIC sqlite3
 )
 
 # коммуникация с ботом; линкуется с cpr, nlohmann_json
@@ -74,7 +75,7 @@ target_link_libraries(deadline_client PRIVATE
 add_library(deadline_dialog STATIC
     src/dialog/BotDialogProcessor.cpp
     src/dialog/DialogState.cpp
-    src/dialog/SessionStateStorage.cpp
+
 )
 target_include_directories(deadline_dialog PUBLIC src/dialog)
 target_link_libraries(deadline_dialog PRIVATE

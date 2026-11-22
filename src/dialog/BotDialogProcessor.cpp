@@ -13,33 +13,109 @@ BotDialogProcessor::StateMachineInput BotDialogProcessor::parseUpdate(const Upda
     return {u.chatId, StateMachineInput::Kind::Text, t};
 }
 
-BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client, std::filesystem::path storagePath) :
+BotDialogProcessor::BotDialogProcessor(std::shared_ptr<IClient> client,
+                                       const std::string& repoPath) :
     m_client(std::move(client)),
-    m_storage(storagePath)
+    m_repo(repoPath)
 {
     m_transitionHandlers.emplace(
-        State::Start,
-        [this](const StateMachineInput& r) {
-            if(r.kind == StateMachineInput::Kind::Command && r.text == "/start") {
-                m_client->sendMessage(r.chatId, "Greetings!");
-                return State::Echo;
+        DialogState::Start,
+        [this](const StateMachineInput& input) {
+            if(input.kind == StateMachineInput::Kind::Command && input.text == "/start") {
+                m_client->sendMessage(input.chatId, "Greetings!");
+                return DialogState::Echo;
             } else {
-                m_client->sendMessage(r.chatId, "Press /start");
-                return State::Start;
+                m_client->sendMessage(input.chatId, "Press /start");
+                return DialogState::Start;
             }
         }
     );
 
     m_transitionHandlers.emplace(
-        State::Echo,
-        [this](const StateMachineInput& r) {
-            if(r.kind == StateMachineInput::Kind::Command && r.text == "/reset") {
-                m_client->sendMessage(r.chatId, "Reseting...");
-                return State::Start;
-            } else {
-                m_client->sendMessage(r.chatId, "Эхо: " + std::string(r.text));
-                return State::Echo;
+        DialogState::Echo,
+        [this](const StateMachineInput& input) {
+            if(input.kind == StateMachineInput::Kind::Command && input.text == "/reset") {
+                m_client->sendMessage(input.chatId, "Reseting...");
+                return DialogState::Start;
             }
+
+            if(input.kind == StateMachineInput::Kind::Command && input.text == "/add") {
+                m_drafts.insert_or_assign(input.chatId, TaskDraft(0, input.chatId));
+                m_client->sendMessage(input.chatId, "Название задачи? (/cancel - отмена)");
+                return DialogState::AwaitTitle;
+            }
+
+            if(input.kind == StateMachineInput::Kind::Command && input.text == "/list") {
+                const auto tasks = m_repo.taskList(input.chatId);
+                std::string text = tasks.empty() ? "Активных задач нет." : "Активные задачи:";
+                for(const auto& t : tasks)
+                    text += "\n" + std::to_string(t.id) + ". " + t.title + " - до " + dateToIso(t.deadline);
+                m_client->sendMessage(input.chatId, text);
+                return DialogState::Echo;
+            }
+
+            m_client->sendMessage(input.chatId, "Эхо: " + std::string(input.text));
+            return DialogState::Echo;
+        }
+    );
+
+    m_transitionHandlers.emplace(
+        DialogState::AwaitTitle,
+        [this](const StateMachineInput& input) {
+            if(input.kind == StateMachineInput::Kind::Command) {
+                if(input.text == "/cancel") {
+                    m_drafts.erase(input.chatId);
+                    m_client->sendMessage(input.chatId, "Отменено.");
+                    return DialogState::Echo;
+                }
+                m_client->sendMessage(input.chatId, "Жду название задачи. /cancel - отмена.");
+                return DialogState::AwaitTitle;
+            }
+
+            if(input.text.find_first_not_of(" \t\r\n") == std::string_view::npos) {
+                m_client->sendMessage(input.chatId, "Название не может быть пустым. Введите название:");
+                return DialogState::AwaitTitle;
+            }
+
+            auto& [_, taskDraft] = *m_drafts.emplace(input.chatId, TaskDraft(0, input.chatId)).first;
+            taskDraft.setTitle(std::string(input.text));
+            m_client->sendMessage(input.chatId, "Дедлайн? Формат ДД-ММ-ГГГГ.");
+            return DialogState::AwaitDeadline;
+        }
+    );
+
+    m_transitionHandlers.emplace(
+        DialogState::AwaitDeadline,
+        [this](const StateMachineInput& input) {
+            if(input.kind == StateMachineInput::Kind::Command) {
+                if(input.text == "/cancel") {
+                    m_drafts.erase(input.chatId);
+                    m_client->sendMessage(input.chatId, "Отменено.");
+                    return DialogState::Echo;
+                }
+                m_client->sendMessage(input.chatId, "Жду дедлайн в формате ДД-ММ-ГГГГ. /cancel - отмена.");
+                return DialogState::AwaitDeadline;
+            }
+
+            auto draft = m_drafts.find(input.chatId);
+            if(draft == m_drafts.end()) {
+                m_client->sendMessage(input.chatId, "Бот перезапускался, черновик потерян.");
+                return DialogState::Echo;
+            }
+
+            try {
+                draft->second.setDeadline(dateFromIso(input.text));
+            } catch(const std::invalid_argument&) {
+                m_client->sendMessage(input.chatId, "Не понял дату. Нужен формат ДД-ММ-ГГГГ.");
+                return DialogState::AwaitDeadline;
+            }
+
+            Task task = draft->second.build();
+            auto id = m_repo.addTask(task);
+            m_drafts.erase(draft);
+            m_client->sendMessage(input.chatId, "Сохранено: <<" + task.title + ">> до " + dateToIso(task.deadline)
+                                                + ", id " + std::to_string(id) + ".");
+            return DialogState::Echo;
         }
     );
 }
@@ -55,16 +131,20 @@ void BotDialogProcessor::stateMachineStep(const Update& update) {
 }
 
 void BotDialogProcessor::restoreSession(std::int64_t chatId) {
-    try {
-        auto saved = m_storage.load(chatId);
-        m_sessions[chatId] = saved.value_or(m_initialState);
-    } catch (const StateFileNotFound&) {
-        m_sessions[chatId] = m_initialState;
-    }
+    auto saved = m_repo.getState(chatId);
+    if (!saved)
+        m_sessions[chatId] = DialogState::Start;
+
+    if (*saved != DialogState::Echo)
+        m_client->sendMessage(chatId, "Бот перезапускался, черновики потеряны.");
+
+    m_sessions[chatId] = DialogState::Echo;
 }
 
-void BotDialogProcessor::saveSessions() const {
-    m_storage.saveAll(m_sessions);
+void BotDialogProcessor::saveSessions() {
+    for (const auto& [chatId, state] : m_sessions)
+        if (state != DialogState::Start)
+            m_repo.setState(chatId, state);
 }
 
 

@@ -22,7 +22,7 @@ public:
     TaskDraft& setDeadline(Date d);
     TaskDraft& setDescription(std::string n);
 
-    Task build() const;
+    Task build();
 
 private:
     std::int64_t m_id;

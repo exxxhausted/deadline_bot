@@ -20,13 +20,13 @@ TaskDraft& TaskDraft::setDescription(std::string n) {
     return *this;
 }
 
-Task TaskDraft::build() const {
-    std::string title = m_title.value_or("");
-    title.erase(0, title.find_first_not_of(" \t\r\n"));
-    title.erase(title.find_last_not_of(" \t\r\n") + 1);
-
-    if (title.empty())
+Task TaskDraft::build() {
+    if (!m_title)
         throw std::invalid_argument("не задано название");
+
+    m_title->erase(0, m_title->find_first_not_of(" \t\r\n"));
+    m_title->erase(m_title->find_last_not_of(" \t\r\n") + 1);
+
     if (!m_deadline)
         throw std::invalid_argument("не задан дедлайн");
     if (!m_deadline->ok())
@@ -35,7 +35,7 @@ Task TaskDraft::build() const {
     Task t;
     t.id          = m_id;
     t.chatId      = m_chatId;
-    t.title       = std::move(title);
+    t.title       = *m_title;
     t.deadline    = *m_deadline;
     t.description = m_description.value_or("");
 

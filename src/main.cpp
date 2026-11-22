@@ -59,7 +59,8 @@ int main() {
     );
 #endif
 
-    BotDialogProcessor proc(client, "stateStorage.json");   //
+    BotDialogProcessor proc(client,                         //
+                            "repository.db");               //
     std::int64_t marker = 0;                                //
     std::signal(SIGINT, onStopSignal);                      // Инфраструктура бота
     constexpr int pollTimeoutSec = 30;                      //
@@ -86,9 +87,9 @@ int main() {
                     marker = update.updateId + 1;
 
             } catch (const std::exception& e) {
-                std::cerr << "process update error"
+                std::cerr << "state mashine error on update №"
                           << update.updateId
-                          << ": "
+                          << " : "
                           << e.what()
                           << '\n';
 
@@ -103,8 +104,8 @@ int main() {
         proc.saveSessions();                                // Сохранение состояний
     } catch (const std::exception& e) {                     // диалогов в файл
         std::cerr << "saveSessions: " << e.what() << '\n';  //
-        return 1;                                           // TODO: нужно не в файл,
-    }                                                       //       а в БД!
+        return 1;                                           //
+    }                                                       //
 
     return 0;
 }

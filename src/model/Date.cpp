@@ -6,7 +6,7 @@ using namespace lstu;
 
 static const std::regex dateFormat(R"((\d{2})-(\d{2})-(\d{4}))");
 
-Date dateFromIso(std::string_view s) {
+Date lstu::dateFromIso(std::string_view s) {
     const std::string str(s);
 
     std::smatch m;
@@ -22,7 +22,7 @@ Date dateFromIso(std::string_view s) {
     throw std::invalid_argument("некорректная дата: " + str);
 }
 
-std::string dateToIso(Date d) {
+std::string lstu::dateToIso(Date d) {
     if (!d.ok()) throw std::invalid_argument("некорректная дата (нельзя преобразовать в строку)");
 
     char buf[16];
