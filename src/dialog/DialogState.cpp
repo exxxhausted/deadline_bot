@@ -4,23 +4,31 @@
 
 namespace lstu {
 
-std::string toString(State state) {
+std::string toString(DialogState state) {
     switch (state) {
-    case State::Start:
+    case DialogState::Start:
         return "Start";
-    case State::Echo:
+    case DialogState::Echo:
         return "Echo";
+    case DialogState::AwaitTitle:
+        return "AwaitTitle";
+    case DialogState::AwaitDeadline:
+        return "AwaitDeadline";
     }
     return "Start";
 }
 
-State stateFromString(std::string_view name) {
+DialogState stateFromString(std::string_view name) {
     if (name == "Start")
-        return State::Start;
+        return DialogState::Start;
     if (name == "Echo")
-        return State::Echo;
+        return DialogState::Echo;
+    if (name == "AwaitTitle")
+        return DialogState::AwaitTitle;
+    if (name == "AwaitDeadline")
+        return DialogState::AwaitDeadline;
 
-    throw std::invalid_argument("Cant convert \"" + std::string(name) + "\" to State");
+    throw std::invalid_argument("Cant convert \"" + std::string(name) + "\" to DialogState");
 }
 
 } // namespace lstu

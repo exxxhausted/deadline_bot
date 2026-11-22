@@ -6,7 +6,8 @@
 #include <memory>
 
 #include "IClient.hpp"
-#include "SessionStateStorage.hpp"
+#include "Task.hpp"
+#include "TaskRepository.hpp"
 
 namespace lstu {
 
@@ -23,23 +24,25 @@ class BotDialogProcessor {
         std::string_view text;
     };
 
-    using Handler = std::function<State(const StateMachineInput&)>;
+    using Handler = std::function<DialogState(const StateMachineInput&)>;
 
-    std::unordered_map<State, Handler> m_transitionHandlers;
-    const State m_initialState = State::Start;
+    std::unordered_map<DialogState, Handler> m_transitionHandlers;
+    const DialogState m_initialState = DialogState::Start;
 
     std::shared_ptr<IClient> m_client;
-    SessionStateStorage m_storage;
+    TaskRepository m_repo;
 
-    std::unordered_map<std::int64_t, State> m_sessions;
+    std::unordered_map<std::int64_t, DialogState> m_sessions;
+    std::unordered_map<std::int64_t, TaskDraft> m_drafts;
 
 public:
-    BotDialogProcessor(std::shared_ptr<IClient> client, std::filesystem::path storagePath);
+    BotDialogProcessor(std::shared_ptr<IClient> client,
+                       const std::string& repoPath);
 
     void stateMachineStep(const Update& update);
 
     void restoreSession(std::int64_t chatId);
-    void saveSessions() const;
+    void saveSessions();
 
 private:
 
